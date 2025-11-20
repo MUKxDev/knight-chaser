@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import GameRules from "./GameRules";
 
 interface LobbyProps {
   onCreateRoom: () => void;
@@ -12,7 +13,7 @@ export default function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white font-sans">
       <h1 className="text-4xl font-bold mb-8 text-amber-400">Knight Chaser</h1>
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-center">
-        <p className="mb-4 text-gray-300">Welcome to the Lobby</p>
+        <p className="mb-4 text-gray-300">Welcome to the Mejlas</p>
 
         <button
           onClick={onCreateRoom}
@@ -36,6 +37,10 @@ export default function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
           >
             Join
           </button>
+        </div>
+
+        <div className="mt-8">
+          <GameRules className="bg-gray-900/30" />
         </div>
       </div>
     </div>

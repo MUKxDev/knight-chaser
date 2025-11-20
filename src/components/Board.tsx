@@ -25,7 +25,20 @@ export default function Board({
 
     // Checkerboard pattern
     const isDark = (x + y) % 2 === 1;
+
     let bgClass = isDark ? "bg-emerald-800" : "bg-emerald-200";
+    if (x === 0 && y === 0) {
+      baseClass += " rounded-tl-sm";
+    }
+    if (x === BOARD_SIZE - 1 && y === 0) {
+      baseClass += " rounded-tr-sm";
+    }
+    if (x === 0 && y === BOARD_SIZE - 1) {
+      baseClass += " rounded-bl-sm";
+    }
+    if (x === BOARD_SIZE - 1 && y === BOARD_SIZE - 1) {
+      baseClass += " rounded-br-sm";
+    }
 
     if (isUnavailable && !isP1 && !isP2) {
       bgClass = "bg-gray-800"; // Visited/Unavailable
