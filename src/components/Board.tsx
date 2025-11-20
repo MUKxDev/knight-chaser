@@ -54,10 +54,16 @@ export default function Board({
     return `${baseClass} ${bgClass}`;
   };
 
+  const isP1Loser = gameState.status === "p2_wins";
+  const isP2Loser = gameState.status === "p1_wins";
+
   return (
     <div
-      className="relative border-4 border-emerald-600"
-      style={{ width: "min(90vw, 600px)", height: "min(90vw, 600px)" }}
+      className="relative border-4 border-emerald-600 mx-auto shadow-2xl shadow-black/50 rounded-lg"
+      style={{
+        width: "min(90vw, 600px, 65vh)",
+        height: "min(90vw, 600px, 65vh)",
+      }}
     >
       {/* Grid Layer */}
       <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full">
@@ -80,7 +86,7 @@ export default function Board({
             gameState.currentPlayer === "p1" && myPlayerId === "p1"
               ? "animate-bounce"
               : ""
-          }`}
+          } ${isP1Loser ? "animate-fly-up-out z-50" : ""}`}
           style={{
             left: `${gameState.p1Pos.x * 12.5}%`,
             top: `${gameState.p1Pos.y * 12.5}%`,
@@ -95,7 +101,7 @@ export default function Board({
             gameState.currentPlayer === "p2" && myPlayerId === "p2"
               ? "animate-bounce"
               : ""
-          }`}
+          } ${isP2Loser ? "animate-fly-up-out z-50" : ""}`}
           style={{
             left: `${gameState.p2Pos.x * 12.5}%`,
             top: `${gameState.p2Pos.y * 12.5}%`,

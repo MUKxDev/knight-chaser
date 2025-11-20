@@ -41,7 +41,7 @@ export default function RoomPage() {
   }
 
   return (
-    <div className="flex flex-col gap-4 items-center justify-center min-h-screen bg-gray-900 text-white font-sans">
+    <div className="flex flex-col gap-4 items-center justify-start pt-4 min-h-screen bg-gray-900 text-white font-sans overflow-x-hidden">
       <GameInfo
         roomId={roomId}
         myPlayerId={myPlayerId}
@@ -52,18 +52,20 @@ export default function RoomPage() {
         onLeave={() => router.push("/")}
         onModeChange={changeMode}
       />
-      <Board
-        gameState={gameState}
-        myPlayerId={myPlayerId}
-        onCellClick={(x, y) => {
-          if (!myPlayerId || gameState.status !== "playing") return;
-          if (gameState.currentPlayer !== myPlayerId) return;
+      <div className="flex-1 flex items-center justify-center w-full pb-8 px-4">
+        <Board
+          gameState={gameState}
+          myPlayerId={myPlayerId}
+          onCellClick={(x, y) => {
+            if (!myPlayerId || gameState.status !== "playing") return;
+            if (gameState.currentPlayer !== myPlayerId) return;
 
-          const currentPos =
-            myPlayerId === "p1" ? gameState.p1Pos : gameState.p2Pos;
-          moveKnight(currentPos, { x, y });
-        }}
-      />
+            const currentPos =
+              myPlayerId === "p1" ? gameState.p1Pos : gameState.p2Pos;
+            moveKnight(currentPos, { x, y });
+          }}
+        />
+      </div>
     </div>
   );
 }

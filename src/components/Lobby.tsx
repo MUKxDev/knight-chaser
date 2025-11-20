@@ -21,18 +21,18 @@ export default function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
           Create New Room
         </button>
 
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             value={inputRoomId}
             onChange={(e) => setInputRoomId(e.target.value.toUpperCase())}
             placeholder="Enter Room ID"
-            className="px-4 py-2 bg-gray-700 rounded text-white border border-gray-600 focus:border-amber-500 outline-none"
+            className="px-4 py-2 bg-gray-700 rounded text-white border border-gray-600 focus:border-amber-500 outline-none w-full"
           />
           <button
             onClick={() => onJoinRoom(inputRoomId)}
             disabled={!inputRoomId}
-            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold disabled:opacity-50"
+            className="px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded font-bold disabled:opacity-50 w-full sm:w-auto"
           >
             Join
           </button>
