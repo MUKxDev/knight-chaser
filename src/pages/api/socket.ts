@@ -20,6 +20,7 @@ interface GameRoom {
     p1?: string;
     p2?: string;
   };
+  cleanupTimeout?: NodeJS.Timeout;
 }
 
 // Global state to persist across hot reloads in dev (mostly)
@@ -108,6 +109,13 @@ export default function SocketHandler(
               })
             );
             return;
+          }
+
+          // Clear any pending cleanup since someone is interacting with the room
+          if (room.cleanupTimeout) {
+            console.log(`Cancelling cleanup for room ${roomId}`);
+            clearTimeout(room.cleanupTimeout);
+            delete room.cleanupTimeout;
           }
 
           // 1. Check if this user is already in the room (Reconnect)
@@ -372,7 +380,24 @@ export default function SocketHandler(
           if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
             opponentWs.send(JSON.stringify({ type: "OPPONENT_DISCONNECTED" }));
           }
-          // Optional: Remove player from room or delete room
+
+          // Check if both players are disconnected
+          const isP1Active =
+            room.players.p1 && room.players.p1.readyState === WebSocket.OPEN;
+          const isP2Active =
+            room.players.p2 && room.players.p2.readyState === WebSocket.OPEN;
+
+          if (!isP1Active && !isP2Active) {
+            console.log(
+              `Room ${currentRoomId} is empty. Scheduling cleanup in 30s.`
+            );
+            room.cleanupTimeout = setTimeout(() => {
+              if (global.rooms.has(currentRoomId!)) {
+                global.rooms.delete(currentRoomId!);
+                console.log(`Room ${currentRoomId} deleted due to inactivity.`);
+              }
+            }, 30000); // 30 seconds grace period
+          }
         }
       }
     });

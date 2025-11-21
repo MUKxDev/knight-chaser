@@ -7,12 +7,14 @@ interface BoardProps {
   gameState: GameState;
   myPlayerId: PlayerId | null;
   onCellClick: (x: number, y: number) => void;
+  opponentConnected: boolean;
 }
 
 export default function Board({
   gameState,
   myPlayerId,
   onCellClick,
+  opponentConnected,
 }: BoardProps) {
   const getCellStyle = (x: number, y: number) => {
     const posStr = posToString({ x, y });
@@ -48,7 +50,8 @@ export default function Board({
     if (
       myPlayerId &&
       gameState.currentPlayer === myPlayerId &&
-      gameState.status === "playing"
+      gameState.status === "playing" &&
+      opponentConnected
     ) {
       const myMode = myPlayerId === "p1" ? gameState.p1Mode : gameState.p2Mode;
 
@@ -85,7 +88,7 @@ export default function Board({
             <div
               key={`${x}-${y}`}
               className={getCellStyle(x, y)}
-              onClick={() => onCellClick(x, y)}
+              onClick={() => opponentConnected && onCellClick(x, y)}
             />
           ))
         )}
@@ -96,7 +99,9 @@ export default function Board({
         {/* Player 1 (White) */}
         <div
           className={`absolute w-[12.5%] h-[12.5%] flex items-center justify-center transition-all duration-300 ease-in-out ${
-            gameState.currentPlayer === "p1" && myPlayerId === "p1"
+            gameState.currentPlayer === "p1" &&
+            myPlayerId === "p1" &&
+            opponentConnected
               ? "animate-bounce"
               : ""
           } ${isP1Loser ? "animate-fly-up-out z-50" : ""}`}
@@ -111,7 +116,9 @@ export default function Board({
         {/* Player 2 (Black) */}
         <div
           className={`absolute w-[12.5%] h-[12.5%] flex items-center justify-center transition-all duration-300 ease-in-out ${
-            gameState.currentPlayer === "p2" && myPlayerId === "p2"
+            gameState.currentPlayer === "p2" &&
+            myPlayerId === "p2" &&
+            opponentConnected
               ? "animate-bounce"
               : ""
           } ${isP2Loser ? "animate-fly-up-out z-50" : ""}`}
@@ -123,6 +130,23 @@ export default function Board({
           <BlackKnight />
         </div>
       </div>
+
+      {/* Waiting Overlay */}
+      {!opponentConnected && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-sm">
+          <div className="bg-gray-900 p-6 rounded-lg border border-amber-500/50 shadow-xl text-center max-w-[80%]">
+            <h3 className="text-xl font-bold text-amber-400 mb-2">
+              Waiting for Opponent
+            </h3>
+            <p className="text-gray-400 text-sm">
+              Share the room ID to start playing!
+            </p>
+            <div className="mt-4 flex justify-center">
+              <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

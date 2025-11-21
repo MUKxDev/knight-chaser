@@ -37,7 +37,7 @@ export default function GameInfo({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 flex flex-col gap-6">
+    <div className="w-full max-w-4xl mx-auto p-4 flex flex-col gap-6 relative">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between w-full bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
         <div className="text-gray-400 flex flex-col gap-2 w-full md:w-auto">
@@ -190,7 +190,7 @@ export default function GameInfo({
       </div>
 
       {error && (
-        <div className="w-full max-w-md mx-auto text-center text-red-400 bg-red-900/20 px-4 py-2 rounded border border-red-900/50">
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 z-50 w-full max-w-md text-center text-red-400 bg-gray-900/90 px-4 py-2 rounded border border-red-900/50 shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-top-2 duration-200">
           {error}
         </div>
       )}

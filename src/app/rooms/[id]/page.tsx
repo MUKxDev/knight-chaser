@@ -70,9 +70,11 @@ export default function RoomPage() {
         <Board
           gameState={gameState}
           myPlayerId={myPlayerId}
+          opponentConnected={opponentConnected}
           onCellClick={(x, y) => {
             if (!myPlayerId || gameState.status !== "playing") return;
             if (gameState.currentPlayer !== myPlayerId) return;
+            if (!opponentConnected) return;
 
             const currentPos =
               myPlayerId === "p1" ? gameState.p1Pos : gameState.p2Pos;

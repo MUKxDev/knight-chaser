@@ -17,6 +17,8 @@ export const useGameSocket = () => {
 
   const socketRef = useRef<WebSocket | null>(null);
 
+  const errorTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const connectingRef = useRef(false);
 
   const connect = useCallback((targetRoomId: string) => {
@@ -67,6 +69,13 @@ export const useGameSocket = () => {
             setGameState(data.gameState);
           } else if (data.type === "ERROR") {
             setError(data.message);
+            if (errorTimeoutRef.current) {
+              clearTimeout(errorTimeoutRef.current);
+            }
+            errorTimeoutRef.current = setTimeout(() => {
+              setError(null);
+              errorTimeoutRef.current = null;
+            }, 2000);
           } else if (data.type === "OPPONENT_DISCONNECTED") {
             setError("Opponent disconnected");
             setOpponentConnected(false);
@@ -94,6 +103,9 @@ export const useGameSocket = () => {
     return () => {
       if (socketRef.current) {
         socketRef.current.close();
+      }
+      if (errorTimeoutRef.current) {
+        clearTimeout(errorTimeoutRef.current);
       }
     };
   }, []);
