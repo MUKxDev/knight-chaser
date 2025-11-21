@@ -75,7 +75,7 @@ export default function Board({
 
   return (
     <div
-      className="relative border-4 border-emerald-600 mx-auto shadow-2xl shadow-black/50 rounded-lg"
+      className="relative border-2 md:border-4 border-emerald-600 mx-auto shadow-2xl shadow-black/50 rounded-lg"
       style={{
         width: "min(90vw, 600px, 65vh)",
         height: "min(90vw, 600px, 65vh)",

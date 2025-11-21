@@ -37,7 +37,7 @@ export default function GameInfo({
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 flex flex-col gap-6 relative">
+    <div className="w-full max-w-4xl mx-auto p-2 md:p-4 flex flex-col gap-4 md:gap-6 relative">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between w-full bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
         <div className="text-gray-400 flex flex-col gap-2 w-full md:w-auto">
@@ -139,7 +139,7 @@ export default function GameInfo({
 
       {/* Game Status Title */}
       <div className="text-center space-y-2">
-        <h1 className="text-3xl md:text-4xl font-bold text-amber-400 tracking-tight">
+        <h1 className="text-2xl md:text-4xl font-bold text-amber-400 tracking-tight">
           Knight Chaser
         </h1>
 
@@ -162,27 +162,29 @@ export default function GameInfo({
               )}
             </span>
           ) : (
-            <div className="flex flex-col items-center gap-4">
-              <span className="text-green-400 font-bold text-2xl">
-                Game Over!{" "}
-                {gameState.status === "p1_wins" ? "Player 1" : "Player 2"} Wins!
-              </span>
+            <div className="absolute left-1/2 -translate-x-1/2 top-full mt-4 z-50 w-max">
+              <div className="flex flex-col items-center gap-4 bg-gray-900/90 p-6 rounded-xl border border-amber-500/30 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500">
+                <span className="text-green-400 font-bold text-2xl md:text-3xl whitespace-nowrap">
+                  Game Over!{" "}
+                  {gameState.status === "p1_wins" ? "White" : "Black"} Wins!
+                </span>
 
-              <div className="flex items-center gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500 fill-mode-forwards">
-                <div className="w-12 h-12 opacity-50 grayscale">
-                  {gameState.status === "p2_wins" ? (
-                    <WhiteKnight />
-                  ) : (
-                    <BlackKnight />
-                  )}
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 opacity-50 grayscale">
+                    {gameState.status === "p2_wins" ? (
+                      <WhiteKnight />
+                    ) : (
+                      <BlackKnight />
+                    )}
+                  </div>
+
+                  <button
+                    onClick={onRestart}
+                    className="px-6 py-2 md:px-8 md:py-3 bg-blue-600 hover:bg-blue-700 rounded-full text-white font-bold transition-all hover:scale-105 shadow-lg shadow-blue-900/20"
+                  >
+                    Play Again
+                  </button>
                 </div>
-
-                <button
-                  onClick={onRestart}
-                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 rounded-full text-white font-bold transition-all hover:scale-105 shadow-lg shadow-blue-900/20"
-                >
-                  Play Again
-                </button>
               </div>
             </div>
           )}

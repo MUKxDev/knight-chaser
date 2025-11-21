@@ -14,11 +14,11 @@ export default function Lobby({ onCreateRoom, onJoinRoom }: LobbyProps) {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white font-sans">
       <TextScramble
         duration={1.5}
-        className="text-4xl font-bold mb-8 text-amber-400"
+        className="text-3xl md:text-4xl font-bold mb-8 text-amber-400"
       >
         Knight Chaser
       </TextScramble>
-      <div className="bg-gray-800 p-8 rounded-lg shadow-lg text-center">
+      <div className="bg-gray-800 p-4 md:p-8 rounded-lg shadow-lg text-center">
         <p className="mb-4 text-gray-300">Welcome to the Mejlas</p>
 
         <button
