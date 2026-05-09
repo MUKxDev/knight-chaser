@@ -21,7 +21,7 @@ export const useGameSocket = () => {
 
   const connectingRef = useRef(false);
 
-  const connect = useCallback((targetRoomId: string) => {
+  const connect = useCallback((targetRoomId: string, options?: { powerupsMode: boolean; blitzMode: boolean; easyMode: boolean }) => {
     if (socketRef.current || connectingRef.current) return;
 
     connectingRef.current = true;
@@ -49,7 +49,14 @@ export const useGameSocket = () => {
 
           // Auto-join the room upon connection
           ws.send(
-            JSON.stringify({ type: "JOIN_ROOM", roomId: targetRoomId, userId })
+            JSON.stringify({ 
+              type: "JOIN_ROOM", 
+              roomId: targetRoomId, 
+              userId,
+              powerupsMode: options?.powerupsMode,
+              blitzMode: options?.blitzMode,
+              easyMode: options?.easyMode
+            })
           );
         };
 

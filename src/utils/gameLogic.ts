@@ -1,6 +1,7 @@
 import { GameState, Position } from '../types/game';
 
-export const BOARD_SIZE = 8;
+export const BOARD_COLS = 6;
+export const BOARD_ROWS = 9;
 
 // Helper to serialize position
 export const posToString = (pos: Position) => `${pos.x},${pos.y}`;
@@ -27,8 +28,7 @@ export const getValidMoves = (pos: Position, currentState: GameState): Position[
     const opponentPosStr = posToString(opponentPos);
 
     return possible.filter((m) => {
-        // Check boundaries
-        if (m.x < 0 || m.x >= BOARD_SIZE || m.y < 0 || m.y >= BOARD_SIZE) return false;
+        if (m.x < 0 || m.x >= BOARD_COLS || m.y < 0 || m.y >= BOARD_ROWS) return false;
 
         const mStr = posToString(m);
         // Check if unavailable

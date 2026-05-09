@@ -29,16 +29,35 @@ interface GameRoom {
 declare global {
   var rooms: Map<string, GameRoom>;
   var wss: WebSocketServer | undefined;
+  var cleanupInterval: NodeJS.Timeout | undefined;
 }
 
 if (!global.rooms) {
   global.rooms = new Map();
 }
 
+if (!global.cleanupInterval) {
+  global.cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    global.rooms.forEach((room) => {
+      if (room.gameState.status === 'playing' && room.gameState.blitzMode && room.gameState.turnStartTime) {
+        if (now - room.gameState.turnStartTime > 7000) {
+           room.gameState.currentPlayer = room.gameState.currentPlayer === 'p1' ? 'p2' : 'p1';
+           room.gameState.turnStartTime = Date.now();
+           const updateMsg = JSON.stringify({ type: "STATE_UPDATE", gameState: room.gameState });
+           if (room.players.p1 && room.players.p1.readyState === WebSocket.OPEN) room.players.p1.send(updateMsg);
+           if (room.players.p2 && room.players.p2.readyState === WebSocket.OPEN) room.players.p2.send(updateMsg);
+        }
+      }
+    });
+  }, 1000);
+}
+
 export default function SocketHandler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   if ((res.socket as any).server.wss) {
     console.log("Socket is already running");
     res.end();
@@ -46,8 +65,10 @@ export default function SocketHandler(
   }
 
   console.log("Socket is initializing");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const httpServer: NetServer = (res.socket as any).server;
   const wss = new WebSocketServer({ server: httpServer, path: "/api/game_ws" });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (res.socket as any).server.wss = wss;
   global.wss = wss;
 
@@ -61,13 +82,22 @@ export default function SocketHandler(
         const data = JSON.parse(message.toString());
 
         if (data.type === "CREATE_ROOM") {
+          const { powerupsMode, blitzMode, easyMode } = data;
           const roomId = Math.random()
             .toString(36)
             .substring(2, 8)
             .toUpperCase();
+            
+          const gameState = JSON.parse(JSON.stringify(INITIAL_STATE));
+          gameState.powerupsMode = !!powerupsMode;
+          gameState.blitzMode = !!blitzMode;
+          gameState.p1Mode = easyMode ? "easy" : "hardcore";
+          gameState.p2Mode = easyMode ? "easy" : "hardcore";
+          if (powerupsMode) gameState.teleporters = ["1,1", "4,7"];
+
           const room: GameRoom = {
             id: roomId,
-            gameState: JSON.parse(JSON.stringify(INITIAL_STATE)),
+            gameState,
             players: { p1: ws },
             playerIds: {},
           };
@@ -84,14 +114,27 @@ export default function SocketHandler(
             })
           );
         } else if (data.type === "JOIN_ROOM") {
-          const { roomId, userId } = data; // Expect userId
+          const { roomId, userId, powerupsMode, blitzMode, easyMode } = data;
           let room = global.rooms.get(roomId);
 
           // If room doesn't exist, create it
           if (!room) {
+            const gameState = JSON.parse(JSON.stringify(INITIAL_STATE));
+            if (powerupsMode) {
+                gameState.powerupsMode = true;
+                gameState.teleporters = ["1,1", "4,7"];
+            }
+            if (blitzMode) {
+                gameState.blitzMode = true;
+            }
+            if (easyMode) {
+                gameState.p1Mode = "easy";
+                gameState.p2Mode = "easy";
+            }
+
             room = {
               id: roomId,
-              gameState: JSON.parse(JSON.stringify(INITIAL_STATE)),
+              gameState,
               players: { p1: ws },
               playerIds: { p1: userId },
             };
@@ -225,6 +268,17 @@ export default function SocketHandler(
           } else {
             ws.send(JSON.stringify({ type: "ERROR", message: "Room is full" }));
           }
+
+          // Check if both players are now connected and start timer if blitz mode
+          const isP1Active = room.players.p1 && room.players.p1.readyState === WebSocket.OPEN;
+          const isP2Active = room.players.p2 && room.players.p2.readyState === WebSocket.OPEN;
+          if (isP1Active && isP2Active && room.gameState.blitzMode && !room.gameState.turnStartTime) {
+             room.gameState.turnStartTime = Date.now();
+             const updateMsg = JSON.stringify({ type: "STATE_UPDATE", gameState: room.gameState });
+             room.players.p1!.send(updateMsg);
+             room.players.p2!.send(updateMsg);
+          }
+
         } else if (data.type === "MOVE") {
           if (!currentRoomId || !myPlayerId) return;
           const room = global.rooms.get(currentRoomId);
@@ -262,10 +316,43 @@ export default function SocketHandler(
           }
 
           // 3. Execute Move
-          const nextPlayer =
-            room.gameState.currentPlayer === "p1" ? "p2" : "p1";
+          const nextPlayer = room.gameState.currentPlayer === "p1" ? "p2" : "p1";
           const moveFromStr = posToString(moveFrom);
-          const moveToStr = posToString(moveTo);
+          let moveToStr = posToString(moveTo);
+          let finalMoveTo = moveTo;
+          
+          if (room.gameState.powerupsMode) {
+              if (room.gameState.teleporters.includes(moveToStr)) {
+                  // Teleport to the other teleporter
+                  const otherTeleporter = room.gameState.teleporters.find((t: string) => t !== moveToStr);
+                  if (otherTeleporter) {
+                      const [tx, ty] = otherTeleporter.split(',').map(Number);
+                      finalMoveTo = { x: tx, y: ty };
+                      moveToStr = otherTeleporter;
+                  }
+              }
+              // Check restores
+              if (room.gameState.restores.includes(moveToStr)) {
+                  room.gameState.restores = room.gameState.restores.filter((r: string) => r !== moveToStr);
+                  if (room.gameState.unavailableSquares.length > 0) {
+                      const idx = Math.floor(Math.random() * room.gameState.unavailableSquares.length);
+                      room.gameState.unavailableSquares.splice(idx, 1);
+                  }
+              }
+              // Randomly spawn a restore
+              if (Math.random() < 0.15 && room.gameState.restores.length < 2) {
+                  const rx = Math.floor(Math.random() * 6);
+                  const ry = Math.floor(Math.random() * 9);
+                  const rStr = `${rx},${ry}`;
+                  if (!room.gameState.unavailableSquares.includes(rStr) && 
+                      rStr !== posToString(room.gameState.p1Pos) && 
+                      rStr !== posToString(room.gameState.p2Pos) &&
+                      !room.gameState.teleporters.includes(rStr)) {
+                      room.gameState.restores.push(rStr);
+                  }
+              }
+          }
+
           const opponentPos =
             room.gameState.currentPlayer === "p1"
               ? room.gameState.p2Pos
@@ -285,11 +372,11 @@ export default function SocketHandler(
             ...room.gameState,
             p1Pos:
               room.gameState.currentPlayer === "p1"
-                ? moveTo
+                ? finalMoveTo
                 : room.gameState.p1Pos,
             p2Pos:
               room.gameState.currentPlayer === "p2"
-                ? moveTo
+                ? finalMoveTo
                 : room.gameState.p2Pos,
             unavailableSquares: [
               ...room.gameState.unavailableSquares,
@@ -297,6 +384,7 @@ export default function SocketHandler(
             ],
             currentPlayer: nextPlayer,
             status: nextStatus,
+            turnStartTime: room.gameState.blitzMode ? Date.now() : undefined,
           };
 
           // Check Stalemate (for the NEXT player)
@@ -329,7 +417,20 @@ export default function SocketHandler(
           if (!room) return;
 
           // Reset Game State
+          const prevMode = room.gameState;
           room.gameState = JSON.parse(JSON.stringify(INITIAL_STATE));
+          room.gameState.powerupsMode = prevMode.powerupsMode;
+          room.gameState.blitzMode = prevMode.blitzMode;
+          
+          const isP1Active = room.players.p1 && room.players.p1.readyState === WebSocket.OPEN;
+          const isP2Active = room.players.p2 && room.players.p2.readyState === WebSocket.OPEN;
+          if (prevMode.blitzMode && isP1Active && isP2Active) {
+             room.gameState.turnStartTime = Date.now();
+          }
+          
+          if (prevMode.powerupsMode) room.gameState.teleporters = ["1,1", "4,7"];
+          room.gameState.p1Mode = prevMode.p1Mode;
+          room.gameState.p2Mode = prevMode.p2Mode;
 
           // Broadcast new state
           const updateMsg = JSON.stringify({

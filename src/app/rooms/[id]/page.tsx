@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useGameSocket } from "../../../hooks/useGameSocket";
 import GameInfo from "../../../components/GameInfo";
 import Board from "../../../components/Board";
@@ -16,10 +16,13 @@ import { TextShimmer } from "../../../../components/motion-primitives/text-shimm
 
 export default function RoomPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const roomId = params?.id as string;
+  const powerupsMode = searchParams.get("powerups") === "true";
+  const blitzMode = searchParams.get("blitz") === "true";
+  const easyMode = searchParams.get("easy") === "true";
 
-  if (!roomId) return <div>Invalid Room ID</div>;
 
   const {
     gameState,
@@ -35,13 +38,15 @@ export default function RoomPage() {
 
   useEffect(() => {
     if (roomId) {
-      connect(roomId);
+      connect(roomId, { powerupsMode, blitzMode, easyMode });
     }
-  }, [roomId, connect]);
+  }, [roomId, connect, powerupsMode, blitzMode, easyMode]);
 
   const connectingToRoomText = useMemo(() => {
     return `Connecting to room ${roomId}...`;
   }, [roomId]);
+
+  if (!roomId) return <div>Invalid Room ID</div>;
 
   if (!isConnected) {
     return (

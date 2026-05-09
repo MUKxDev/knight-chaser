@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { GameState, PlayerId, Mode } from "../types/game";
 import { Switch } from "./ui/switch";
 import { WhiteKnight, BlackKnight } from "./Knights";
@@ -35,6 +35,25 @@ export default function GameInfo({
       console.error("Failed to copy:", err);
     }
   };
+
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!gameState.blitzMode || !gameState.turnStartTime || gameState.status !== "playing") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTimeLeft(null);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - gameState.turnStartTime!;
+      const remaining = Math.max(0, 7000 - elapsed);
+      setTimeLeft(remaining);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [gameState.turnStartTime, gameState.status, gameState.blitzMode]);
 
   return (
     <div className="w-full max-w-4xl mx-auto p-2 md:p-4 flex flex-col gap-4 md:gap-6 relative">
@@ -145,8 +164,9 @@ export default function GameInfo({
 
         <div className="text-xl h-8">
           {gameState.status === "playing" ? (
-            <span
-              className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide ${
+            <>
+              <span
+                className={`inline-flex items-center gap-2 px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide ${
                 gameState.currentPlayer === myPlayerId
                   ? "bg-green-900/30 text-green-400 border border-green-900/50"
                   : "bg-gray-800 text-gray-500 border border-gray-700"
@@ -161,6 +181,12 @@ export default function GameInfo({
                 "Opponent's Turn"
               )}
             </span>
+              {gameState.blitzMode && timeLeft !== null && (
+                <span className={`ml-4 inline-flex items-center gap-1 font-mono text-lg ${timeLeft < 3000 ? "text-red-400 animate-pulse" : "text-amber-400"}`}>
+                  ⏱ {(timeLeft / 1000).toFixed(1)}s
+                </span>
+              )}
+            </>
           ) : (
             <div className="absolute left-1/2 -translate-x-1/2 top-full mt-4 z-50 w-max">
               <div className="flex flex-col items-center gap-4 bg-gray-900/90 p-6 rounded-xl border border-amber-500/30 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-500">

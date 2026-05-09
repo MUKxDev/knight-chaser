@@ -1,7 +1,8 @@
 import React from "react";
 import { GameState, PlayerId, Position } from "../types/game";
-import { getValidMoves, posToString, BOARD_SIZE } from "../utils/gameLogic";
+import { getValidMoves, posToString, BOARD_COLS, BOARD_ROWS } from "../utils/gameLogic";
 import { WhiteKnight, BlackKnight } from "./Knights";
+import { motion, AnimatePresence } from "motion/react";
 
 interface BoardProps {
   gameState: GameState;
@@ -32,18 +33,14 @@ export default function Board({
     if (x === 0 && y === 0) {
       baseClass += " rounded-tl-sm";
     }
-    if (x === BOARD_SIZE - 1 && y === 0) {
+    if (x === BOARD_COLS - 1 && y === 0) {
       baseClass += " rounded-tr-sm";
     }
-    if (x === 0 && y === BOARD_SIZE - 1) {
+    if (x === 0 && y === BOARD_ROWS - 1) {
       baseClass += " rounded-bl-sm";
     }
-    if (x === BOARD_SIZE - 1 && y === BOARD_SIZE - 1) {
+    if (x === BOARD_COLS - 1 && y === BOARD_ROWS - 1) {
       baseClass += " rounded-br-sm";
-    }
-
-    if (isUnavailable && !isP1 && !isP2) {
-      bgClass = "bg-gray-800"; // Visited/Unavailable
     }
 
     // Highlight valid moves for current player (only in easy mode)
@@ -82,15 +79,37 @@ export default function Board({
       }}
     >
       {/* Grid Layer */}
-      <div className="grid grid-cols-8 grid-rows-8 gap-0 w-full h-full">
-        {Array.from({ length: BOARD_SIZE }).map((_, y) =>
-          Array.from({ length: BOARD_SIZE }).map((_, x) => (
-            <div
-              key={`${x}-${y}`}
-              className={getCellStyle(x, y)}
-              onClick={() => opponentConnected && onCellClick(x, y)}
-            />
-          ))
+      <div className="grid w-full h-full" style={{ gridTemplateColumns: `repeat(${BOARD_COLS}, minmax(0, 1fr))`, gridTemplateRows: `repeat(${BOARD_ROWS}, minmax(0, 1fr))` }}>
+        {Array.from({ length: BOARD_ROWS }).map((_, y) =>
+          Array.from({ length: BOARD_COLS }).map((_, x) => {
+            const posStr = posToString({ x, y });
+            const isUnavailable = gameState.unavailableSquares.includes(posStr);
+            const isP1 = posToString(gameState.p1Pos) === posStr;
+            const isP2 = posToString(gameState.p2Pos) === posStr;
+            const isVisible = !isUnavailable || isP1 || isP2;
+            const isTeleporter = gameState.teleporters?.includes(posStr);
+            const isRestore = gameState.restores?.includes(posStr);
+
+            return (
+              <div key={`${x}-${y}`} className="w-full h-full relative">
+                <AnimatePresence>
+                  {isVisible && (
+                    <motion.div
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.3, opacity: 0, y: 30 }}
+                      transition={{ duration: 0.4 }}
+                      className={getCellStyle(x, y)}
+                      onClick={() => opponentConnected && onCellClick(x, y)}
+                    >
+                      {isTeleporter && <div className="absolute w-4 h-4 bg-sky-400 rounded-full shadow-[0_0_12px_4px_rgba(56,189,248,0.8)] animate-pulse" />}
+                      {isRestore && <div className="absolute text-2xl animate-bounce">✨</div>}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -98,7 +117,7 @@ export default function Board({
       <div className="absolute inset-0 pointer-events-none">
         {/* Player 1 (White) */}
         <div
-          className={`absolute w-[12.5%] h-[12.5%] flex items-center justify-center transition-all duration-300 ease-in-out ${
+          className={`absolute flex items-center justify-center transition-all duration-300 ease-in-out ${
             gameState.currentPlayer === "p1" &&
             myPlayerId === "p1" &&
             opponentConnected
@@ -106,8 +125,10 @@ export default function Board({
               : ""
           } ${isP1Loser ? "animate-fly-up-out z-50" : ""}`}
           style={{
-            left: `${gameState.p1Pos.x * 12.5}%`,
-            top: `${gameState.p1Pos.y * 12.5}%`,
+            width: `${100 / BOARD_COLS}%`,
+            height: `${100 / BOARD_ROWS}%`,
+            left: `${gameState.p1Pos.x * (100 / BOARD_COLS)}%`,
+            top: `${gameState.p1Pos.y * (100 / BOARD_ROWS)}%`,
           }}
         >
           <WhiteKnight />
@@ -115,7 +136,7 @@ export default function Board({
 
         {/* Player 2 (Black) */}
         <div
-          className={`absolute w-[12.5%] h-[12.5%] flex items-center justify-center transition-all duration-300 ease-in-out ${
+          className={`absolute flex items-center justify-center transition-all duration-300 ease-in-out ${
             gameState.currentPlayer === "p2" &&
             myPlayerId === "p2" &&
             opponentConnected
@@ -123,8 +144,10 @@ export default function Board({
               : ""
           } ${isP2Loser ? "animate-fly-up-out z-50" : ""}`}
           style={{
-            left: `${gameState.p2Pos.x * 12.5}%`,
-            top: `${gameState.p2Pos.y * 12.5}%`,
+            width: `${100 / BOARD_COLS}%`,
+            height: `${100 / BOARD_ROWS}%`,
+            left: `${gameState.p2Pos.x * (100 / BOARD_COLS)}%`,
+            top: `${gameState.p2Pos.y * (100 / BOARD_ROWS)}%`,
           }}
         >
           <BlackKnight />
