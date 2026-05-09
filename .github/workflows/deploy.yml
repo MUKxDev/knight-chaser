@@ -1,0 +1,13 @@
+name: Deploy to Proxmox
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted # Tells it to run on your LXC 103
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and Restart Container
+        run: |
+          docker compose up -d --build
