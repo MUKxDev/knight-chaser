@@ -19,9 +19,9 @@ export default function RoomPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const roomId = params?.id as string;
-  const powerupsMode = searchParams.get("powerups") === "true";
-  const blitzMode = searchParams.get("blitz") === "true";
-  const easyMode = searchParams.get("easy") === "true";
+  const powerupsMode = searchParams?.get("powerups") === "true";
+  const blitzMode = searchParams?.get("blitz") === "true";
+  const easyMode = searchParams?.get("easy") === "true";
 
 
   const {
